@@ -51,6 +51,7 @@ namespace eiffel
 		bool whole_program_optimisation = false;
 		std::string platform = "";
 		bool use_debug_libraries = true;
+		std::string configuration_type = "Application";
 	};
 
 	struct XmlInfo
@@ -73,6 +74,8 @@ namespace eiffel
 		std::vector< std::string > h_filenames;
 
 		std::vector< NugetPackage > nuget_packages;
+		bool is_main_project = true;
+
 	};
 
 	VisualStudioProjectFile createProjectFile(ProjectInfo const & project_info);

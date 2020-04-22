@@ -81,6 +81,16 @@ namespace eiffel
 		project_file.nuget_packages = findNugetPackages(project_info);
 	}
 
+	void setStaticLib(ProjectInfo const& project_info, VisualStudioProjectFile& project_file)
+	{
+		if (!project_info.is_static_lib) return;
+		project_file.is_main_project = false;
+		for (auto& [conf, info] : project_file.configuration_infos)
+		{
+			info.configuration_type = "StaticLibrary";
+		}
+	}
+
 	VisualStudioProjectFile createProjectFile(ProjectInfo const& project_info)
 	{
 		auto result = VisualStudioProjectFile{};
@@ -88,6 +98,7 @@ namespace eiffel
 		result.project_guid = project_info.guid;
 		findCppAndHFiles(project_info, result);
 		findNugetPackages(project_info, result);
+		setStaticLib(project_info, result);
 		return result;
 	}
 	
@@ -179,7 +190,7 @@ namespace eiffel
 			auto node = parent.addNode("PropertyGroup");
 			setConfigCondition(node, conf);
 			node.setAttribute("Label", "Configutation");
-			node.addNode("ConfigurationType").setText("Application");
+			node.addNode("ConfigurationType").setText(info.configuration_type);
 			node.addNode("UseDebugLibraries").setText(b_to_s(info.use_debug_libraries));
 			node.addNode("PlatformToolset").setText(info.platform_toolset);
 			node.addNode("WholeProgramOptimization").setText(b_to_s(info.whole_program_optimisation));
@@ -207,6 +218,8 @@ namespace eiffel
 				auto node = parent.addNode("PropertyGroup");
 				setConfigCondition(node, config);
 				node.addNode("LinkIncremental").setText(b_to_s(info.link_incrmental));
+				node.addNode("OutDir").setText("$(SolutionDir)\\..\\$(Platform)_$(Configuration)\\output\\");
+				node.addNode("IntDir").setText("$(SolutionDir)\\..\\$(Platform)_$(Configuration)\\build\\$(ProjectName)\\");
 			}
 		}
 
@@ -302,7 +315,14 @@ namespace eiffel
 				error_node.setAttribute("Condition", condition);
 				error_node.setAttribute("Text", text);
 			}
-		}		
+		}
+
+		// TODO: Project References:
+		//<ItemGroup>
+		//<ProjectReference Include="DepTest1.vcxproj">
+		//	<Project>{b8ff6b70-078a-f2e9-6bc3-6c4d51b01af5}</Project>
+		//</ProjectReference>
+		//</ItemGroup>		
 
 		void writeProjectNode(std::stringstream & stream, Vs const& vs, Info const & info)
 		{
