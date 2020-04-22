@@ -98,7 +98,7 @@ namespace eiffel
 
         for (auto dep : findDependencies(project_info))
         {
-            auto & info = result.all_projects[dep] =  getProjectInfo(dep);
+            auto & info = result.all_projects[dep] = getProjectInfo(dep, project_id);
             addNugetPackages(info, result);
         }
 

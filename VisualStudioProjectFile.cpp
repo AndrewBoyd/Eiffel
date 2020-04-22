@@ -349,10 +349,10 @@ namespace eiffel
 		using Node = xylo::XmlNode;
 		using Vs = VisualStudioProjectFile;
 
-		void writePackagesNode(std::stringstream& stream, Vs const& vs)
+		void writePackagesNode(std::stringstream& stream, std::set<NugetPackage> const& nuget_packages)
 		{
 			auto packages_node = Node(&stream, "packages");
-			for (auto& nuget_package : vs.nuget_packages)
+			for (auto& nuget_package : nuget_packages)
 			{
 				auto package_node = packages_node.addNode("package");
 				package_node.setAttribute("id", nuget_package.package_id);
@@ -361,11 +361,11 @@ namespace eiffel
 			}
 		}
 
-		void exportFile(std::filesystem::path filename, Vs const& vs)
+		void exportFile(std::filesystem::path filename, std::set<NugetPackage> const& nuget_packages)
 		{
 			auto stream = std::stringstream(std::ios_base::out);
 			xylo::addXmlEncodingLine(stream);
-			writePackagesNode(stream, vs);
+			writePackagesNode(stream, nuget_packages);
 			std::ofstream(filename) << stream.str();
 		}
 	}
@@ -377,6 +377,7 @@ namespace eiffel
 	void exportProjectFile(ProjectInfo const& project_info, VisualStudioProjectFile const& project_file)
 	{
 		auto filename = project_info.paths.vs_directory / (project_info.name + ".vcxproj");
+		std::cout << "Writing file : " << filename << std::endl;
 		vcxproj::exportFile(filename, project_file, project_info);
 	}
 
@@ -388,19 +389,24 @@ namespace eiffel
 	{
 	}
 
-	void exportPackagesFile(ProjectInfo const & project_info, VisualStudioProjectFile const & project_file)
+	void exportPackagesFile(Solution const & solution)
 	{
+		auto& project_info = solution.all_projects.at(solution.main_project);
 		auto filename = project_info.paths.vs_directory / "packages.config";
-		packages_config::exportFile(filename, project_file);
+		std::cout << "Writing file : " << filename << std::endl;
+		packages_config::exportFile(filename, solution.nuget_packages);
 	}
 
-	void exportProjectFiles(ProjectInfo const& project_info, VisualStudioProjectFile const& project_file)
+	void exportSolution(Solution const& solution)
 	{
-		std::filesystem::create_directories(project_info.paths.vs_directory);
-		exportProjectFile(project_info, project_file);
-		exportFiltersFile(project_info, project_file);
-		exportSolutionFile(project_info, project_file);
-		exportPackagesFile(project_info, project_file);
+		exportPackagesFile(solution);
+
+		for (auto& [project, project_info] : solution.all_projects)
+		{
+			auto project_file = createProjectFile(project_info);
+			std::filesystem::create_directories(project_info.paths.vs_directory);
+			exportProjectFile(project_info, project_file);
+		}
 	}
 
 

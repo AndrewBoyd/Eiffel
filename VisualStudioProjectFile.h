@@ -3,6 +3,7 @@
 #include "NugetPackage.h"
 #include "cpp20.h"
 #include "guid.h"
+#include "SolutionManager.h"
 #include <filesystem>
 #include <compare>
 #include <string>
@@ -76,6 +77,5 @@ namespace eiffel
 
 	VisualStudioProjectFile createProjectFile(ProjectInfo const & project_info);
 
-	void exportProjectFiles(ProjectInfo const& project_info, VisualStudioProjectFile const& project_file);
-
+	void exportSolution(Solution const& solution);
 }

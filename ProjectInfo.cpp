@@ -45,7 +45,7 @@ namespace eiffel
 	{
 		auto result = ProjectInfo{};
 		result.paths = getProjectPaths_Eiffel(project_directory, main_project_directory);
-		result.name = (--project_directory.end())->string();
+		result.name = project_directory.filename().string();
 		result.config = nlohmann::json::parse(std::ifstream(result.paths.config_file));
 		result.guid = guid::generateGuid();
 		result.is_eiffel = true;
@@ -56,8 +56,8 @@ namespace eiffel
 		std::filesystem::path main_project_directory)
 	{
 		auto result = ProjectInfo{};
-		result.paths = getProjectPaths_Eiffel(project_directory, main_project_directory);
-		result.name = (--project_directory.end())->string();
+		result.paths = getProjectPaths_NotEiffel(project_directory, main_project_directory);
+		result.name = project_directory.filename().string();
 		result.config = nlohmann::json{};
 		result.guid = guid::generateGuid();
 		return result;
