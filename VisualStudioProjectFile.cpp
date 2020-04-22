@@ -317,14 +317,26 @@ namespace eiffel
 			}
 		}
 
-		// TODO: Project References:
-		//<ItemGroup>
-		//<ProjectReference Include="DepTest1.vcxproj">
-		//	<Project>{b8ff6b70-078a-f2e9-6bc3-6c4d51b01af5}</Project>
-		//</ProjectReference>
-		//</ItemGroup>		
+		void writeProjectDependencies(Node& parent,
+			Solution const& solution,
+			ProjectId const& project_id)
+		{
+			if (solution.dependency_tree.find(project_id) == solution.dependency_tree.end()) return;
+			auto node = parent.addNode("ItemGroup");
+			for (auto& dep_id : solution.dependency_tree.at(project_id))
+			{
+				auto & dep_info = solution.all_projects.at(dep_id);
+				auto dep_node = node.addNode("ProjectReference");
+				dep_node.setAttribute("Include", fmt::format("{}.vcxproj", dep_info.name));
+				dep_node.addNode("Project").setText(dep_info.guid);
+			}
+		}
 
-		void writeProjectNode(std::stringstream & stream, Vs const& vs, Info const & info)
+		void writeProjectNode(std::stringstream & stream, 
+			ProjectId const & project_id,
+			Solution const& solution, 
+			Vs const& vs, 
+			Info const & info)
 		{
 			auto node = Node(&stream, "Project");
 			node.setAttribute("DefaultTargets", "Build");
@@ -341,15 +353,20 @@ namespace eiffel
 			addCompileFiles(node, vs);
 			addIncludeFiles(node, vs);
 			addWindowsTargets(node);
+			writeProjectDependencies(node, solution, project_id);
 			addNugetImports(node, vs);
 			addNugetErrors(node, vs);
 		}
 
-		void exportFile(std::filesystem::path filename, Vs const & vs, Info const & info)
+		void exportFile(std::filesystem::path filename,
+			ProjectId const& project_id,
+			Solution const & solution, 
+			Vs const & vs, 
+			Info const & info)
 		{
 			auto stream = std::stringstream(std::ios_base::out);
 			xylo::addXmlEncodingLine(stream);
-			writeProjectNode(stream, vs, info);
+			writeProjectNode(stream, project_id, solution, vs, info);
 			std::ofstream(filename) << stream.str();
 		}
 	}
@@ -500,11 +517,14 @@ namespace eiffel
 	/////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////
 
-	void exportProjectFile(ProjectInfo const& project_info, VisualStudioProjectFile const& project_file)
+	void exportProjectFile(ProjectInfo const& project_info,
+		ProjectId const& project_id,
+		Solution const& solution, 
+		VisualStudioProjectFile const& project_file)
 	{
 		auto filename = project_info.paths.vs_directory / (project_info.name + ".vcxproj");
 		std::cout << "Writing file : " << filename << std::endl;
-		vcxproj::exportFile(filename, project_file, project_info);
+		vcxproj::exportFile(filename, project_id, solution, project_file, project_info);
 	}
 
 	void exportFiltersFile(ProjectInfo const& project_info, VisualStudioProjectFile const& project_file)
@@ -533,7 +553,7 @@ namespace eiffel
 		{
 			auto project_file = createProjectFile(project_info);
 			std::filesystem::create_directories(project_info.paths.vs_directory);
-			exportProjectFile(project_info, project_file);
+			exportProjectFile(project_info, project, solution, project_file);
 		}
 
 		exportPackagesFile(solution);
