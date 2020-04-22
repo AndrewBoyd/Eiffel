@@ -57,7 +57,7 @@ namespace eiffel
 	{
 		auto result = ProjectInfo{};
 		result.paths = getProjectPaths_NotEiffel(project_directory, main_project_directory);
-		result.name = project_directory.filename().string();
+		result.name = (--project_directory.end())->string();
 		result.config = nlohmann::json{};
 		result.guid = guid::generateGuid();
 		return result;
@@ -76,6 +76,13 @@ namespace eiffel
 			return getProjectInfo_Eiffel(project_directory, main_project_directory);
 		}
 		return getProjectInfo_NotEiffel(project_directory, main_project_directory);
+	}
+
+	ProjectInfo getLibProjectInfo(std::filesystem::path project_directory, std::filesystem::path main_project_directory)
+	{
+		auto result = getProjectInfo(project_directory, main_project_directory);
+		result.is_static_lib = true;
+		return result;
 	}
 }
 

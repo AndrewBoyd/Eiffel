@@ -374,6 +374,112 @@ namespace eiffel
 	// Solution /////////////////////////////////////////
 	/////////////////////////////////////////////////////
 
+	namespace sln {
+		void addStandardHeader(std::stringstream& stream)
+		{
+			stream << "\nMicrosoft Visual Studio Solution File, Format Version 12.00\n"
+				"# Visual Studio Version 16\n"
+				"VisualStudioVersion = 16.0.30011.22\n"
+				"MinimumVisualStudioVersion = 10.0.40219.1\n";
+		}
+
+		void addProjectDependencies(std::stringstream& stream,
+			Solution const& solution,
+			ProjectId const& project_id)
+		{
+			auto found_it = solution.dependency_tree.find(project_id);
+			if (found_it != solution.dependency_tree.end())
+			{
+				stream << "\tProjectSection(ProjectDependencies) = postProject\n";
+				for (auto & dependency_id : found_it->second)
+				{
+					auto& dependency_info = solution.all_projects.at(dependency_id);
+					stream << fmt::format("\t\t{0} = {0}\n", dependency_info.guid);
+				}
+				stream << "\tEndProjectSection\n";
+			}
+		}
+
+		void addProject(std::stringstream& stream, 
+			Solution const& solution,
+			ProjectId const& project_id,
+			guid::Guid const & projects_guid)
+		{
+			auto& project_info = solution.all_projects.at(project_id);
+			auto to_format = "Project(\"{}\") = \"{}\", \"{}\", \"{}\"\n";
+			auto vcxproj_filename = project_info.name + ".vcxproj";
+			auto formatted = fmt::format(to_format, projects_guid, project_info.name, vcxproj_filename, project_info.guid);
+			stream << formatted;
+			addProjectDependencies(stream, solution, project_id);
+			stream << "EndProject\n";
+		}
+
+		void addProjects(std::stringstream& stream, Solution const& solution)
+		{
+			auto projects_guid = guid::generateGuid(); // of unknown use
+			addProject(stream, solution, solution.main_project, projects_guid);
+			for (auto& [project_path, project_info] : solution.all_projects)
+			{
+				if (project_path != solution.main_project)
+				{
+					addProject(stream, solution, project_path, projects_guid);
+				}
+			}
+		}
+
+		void addProjectConfigurationPlatforms(std::stringstream& stream, Solution const& solution)
+		{
+			for (auto& [project_path, project_info] : solution.all_projects)
+			{
+				auto project_file = createProjectFile(project_info);
+				for (auto [config, info] : project_file.configuration_infos)
+				{
+					// TODO: work out what this is
+					for (auto unknown_param : { "ActiveCfg", "Build.0" })
+					{
+						auto to_format = "\t\t{0}.{1}.{2} = {1}\n";
+						auto slug = getConfigurationSlug(config);
+						stream << fmt::format(to_format, project_file.project_guid, slug, unknown_param);
+					}
+				}
+			}
+		}
+
+		void addGlobalSection(std::stringstream& stream, Solution const& solution)
+		{
+			auto solution_guid = guid::generateGuid();
+			stream << "Global\n";
+			stream << "\tGlobalSection(SolutionConfigurationPlatforms) = preSolution\n";
+			stream << "\t\tDebug|x64 = Debug|x64\n"; // Todo: From Data
+			stream << "\t\tRelease|x64 = Release|x64\n"; // Todo: From Data
+			stream << "\tEndGlobalSection\n";
+			stream << "\tGlobalSection(ProjectConfigurationPlatforms) = postSolution\n";
+			addProjectConfigurationPlatforms(stream, solution);
+			stream << "\tEndGlobalSection\n";
+			stream << "\tGlobalSection(SolutionProperties) = preSolution\n";
+			stream << "\t\tHideSolutionNode = FALSE\n";
+			stream << "\tEndGlobalSection\n";
+			stream << "\tGlobalSection(ExtensibilityGlobals) = postSolution\n";
+			stream << fmt::format("\t\tSolutionGuid = {}\n", solution_guid);
+			stream << "\tEndGlobalSection\n";
+			stream << "EndGlobal\n";
+		}
+
+		void exportFile(std::filesystem::path filename, Solution const & solution)
+		{
+			auto stream = std::stringstream();
+			auto guid_2 = guid::generateGuid();
+			addStandardHeader(stream);
+			addProjects(stream, solution);
+			addGlobalSection(stream, solution);
+			std::ofstream(filename) << stream.str();
+		}
+	}
+
+	/////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////
+
 	void exportProjectFile(ProjectInfo const& project_info, VisualStudioProjectFile const& project_file)
 	{
 		auto filename = project_info.paths.vs_directory / (project_info.name + ".vcxproj");
@@ -385,8 +491,12 @@ namespace eiffel
 	{
 	}
 
-	void exportSolutionFile(ProjectInfo const& project_info, VisualStudioProjectFile const& project_file)
+	void exportSolutionFile(Solution const& solution)
 	{
+		auto& project_info = solution.all_projects.at(solution.main_project);
+		auto filename = project_info.paths.vs_directory / (project_info.name + ".sln");
+		std::cout << "Writing file : " << filename << std::endl;
+		sln::exportFile(filename, solution);
 	}
 
 	void exportPackagesFile(Solution const & solution)
@@ -399,14 +509,15 @@ namespace eiffel
 
 	void exportSolution(Solution const& solution)
 	{
-		exportPackagesFile(solution);
-
 		for (auto& [project, project_info] : solution.all_projects)
 		{
 			auto project_file = createProjectFile(project_info);
 			std::filesystem::create_directories(project_info.paths.vs_directory);
 			exportProjectFile(project_info, project_file);
 		}
+
+		exportPackagesFile(solution);
+		exportSolutionFile(solution);
 	}
 
 
