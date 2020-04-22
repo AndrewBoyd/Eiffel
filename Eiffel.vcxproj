@@ -155,7 +155,9 @@
     <ClCompile Include="cpp20.cpp" />
     <ClCompile Include="Eiffel.cpp" />
     <ClCompile Include="guid.cpp" />
+    <ClCompile Include="NugetPackage.cpp" />
     <ClCompile Include="ProjectInfo.cpp" />
+    <ClCompile Include="SolutionManager.cpp" />
     <ClCompile Include="string_utils.cpp" />
     <ClCompile Include="VisualStudioProjectFile.cpp" />
     <ClCompile Include="xylo_xml.cpp" />
@@ -167,7 +169,9 @@
     <ClInclude Include="ConsoleArguments.h" />
     <ClInclude Include="cpp20.h" />
     <ClInclude Include="guid.h" />
+    <ClInclude Include="NugetPackage.h" />
     <ClInclude Include="ProjectInfo.h" />
+    <ClInclude Include="SolutionManager.h" />
     <ClInclude Include="string_utils.h" />
     <ClInclude Include="VisualStudioProjectFile.h" />
     <ClInclude Include="xylo_xml.h" />

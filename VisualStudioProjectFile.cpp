@@ -57,8 +57,6 @@ namespace eiffel
 				else if (configuration == "Release") setReleaseBuild(config_info);
 			}
 		}
-
-		project_file.project_guid = guid::generateGuid();
 	}
 
 	void findCppAndHFiles(ProjectInfo const& project_info, VisualStudioProjectFile & project_file)
@@ -80,24 +78,14 @@ namespace eiffel
 
 	void findNugetPackages(ProjectInfo const& project_info, VisualStudioProjectFile& project_file)
 	{
-		auto nugets_json = project_info.config["nuget"];
-		for (auto nuget_json : nugets_json)
-		{
-			auto nuget_string = nuget_json.get<std::string>();
-			auto split = string_utils::split(nuget_string, '|');
-			if (split.size() != 2) throw std::exception("Malformed nuget string");
-
-			auto nuget_package = NugetPackage{};
-			nuget_package.package_id = split[0];
-			nuget_package.version = split[1];
-			project_file.nuget_packages.push_back(nuget_package);
-		}
+		project_file.nuget_packages = findNugetPackages(project_info);
 	}
 
 	VisualStudioProjectFile createProjectFile(ProjectInfo const& project_info)
 	{
 		auto result = VisualStudioProjectFile{};
 		initProjectFile(result);
+		result.project_guid = project_info.guid;
 		findCppAndHFiles(project_info, result);
 		findNugetPackages(project_info, result);
 		return result;
@@ -278,11 +266,6 @@ namespace eiffel
 		void addWindowsTargets(Node& parent)
 		{
 			parent.addNode("Import").setAttribute("Project", "$(VCTargetsPath)\\Microsoft.Cpp.Targets");
-		}
-
-		std::string getNugetTargetsFile(NugetPackage const & nuget_package)
-		{
-			return fmt::format("packages\\{0}.{1}\\build\\{0}.targets", nuget_package.package_id, nuget_package.version);
 		}
 
 		void addNugetImports(Node& parent, Vs const& vs)

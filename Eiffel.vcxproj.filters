@@ -35,6 +35,12 @@
     <ClCompile Include="guid.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SolutionManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NugetPackage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -59,6 +65,12 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="guid.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SolutionManager.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NugetPackage.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

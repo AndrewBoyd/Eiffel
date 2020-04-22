@@ -1,5 +1,6 @@
 #pragma once
 #include "ProjectInfo.h"
+#include "NugetPackage.h"
 #include "cpp20.h"
 #include "guid.h"
 #include <filesystem>
@@ -55,12 +56,6 @@ namespace eiffel
 	{
 		std::string version = "1.0";
 		std::string encoding = "utf-8";
-	};
-
-	struct NugetPackage
-	{
-		std::string package_id;
-		std::string version;
 	};
 
 	struct VisualStudioProjectFile 

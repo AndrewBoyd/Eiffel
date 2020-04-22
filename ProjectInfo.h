@@ -1,4 +1,5 @@
 #pragma once
+#include "guid.h"
 #include <nlohmann/json.hpp>
 #include <filesystem>
 
@@ -19,10 +20,14 @@ namespace eiffel {
 		std::string name = "";
 		ProjectConfig config = {};
 		ProjectPaths paths = {};
+		guid::Guid guid = {};
+		bool is_eiffel = false;
 	};
 
 	bool isEiffelProject(std::filesystem::path directory);
+	bool isEiffelProject(ProjectInfo const & project);
 	ProjectInfo getProjectInfo(std::filesystem::path project_directory);
-
-
+	ProjectInfo getProjectInfo(std::filesystem::path project_directory, std::filesystem::path main_project_directory);
 }
+
+
