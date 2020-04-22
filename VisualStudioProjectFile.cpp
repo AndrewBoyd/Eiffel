@@ -91,6 +91,24 @@ namespace eiffel
 		}
 	}
 
+	void setAdditionalIncludeDirectories(VisualStudioProjectFile& vs,
+		Solution const & solution,
+		std::vector< ProjectId> const& dependencies)
+	{
+		auto stream = std::stringstream{};
+		for (auto& dep : dependencies)
+		{
+			auto& dep_info = solution.all_projects.at(dep);
+			stream << dep_info.paths.source_directory << ";";
+		}
+
+		auto as_str = stream.str();
+		for (auto& [conf, info] : vs.configuration_infos)
+		{
+			info.compile_info.additional_include_directories = as_str;
+		}
+	}
+
 	VisualStudioProjectFile createProjectFile(ProjectInfo const& project_info)
 	{
 		auto result = VisualStudioProjectFile{};
@@ -234,6 +252,7 @@ namespace eiffel
 			node.addNode("PreprocessorDefinitions").setText( concat( ci.preprocessor_definitions, ";" ) );
 			node.addNode("ConformanceMode").setText(b_to_s(ci.conformance_mode));
 			node.addNode("LanguageStandard").setText(ci.language_standard);
+			node.addNode("AdditionalIncludeDirectories").setText(ci.additional_include_directories);
 		}
 
 		void setItemDefLink(Node& parent, ConfigurationInfo info)
@@ -552,6 +571,13 @@ namespace eiffel
 		for (auto& [project, project_info] : solution.all_projects)
 		{
 			auto project_file = createProjectFile(project_info);
+
+			if (auto found_it = solution.dependency_tree.find(project);
+				found_it != solution.dependency_tree.end())
+			{
+				setAdditionalIncludeDirectories(project_file, solution, found_it->second);
+			}
+
 			std::filesystem::create_directories(project_info.paths.vs_directory);
 			exportProjectFile(project_info, project, solution, project_file);
 		}

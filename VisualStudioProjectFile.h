@@ -31,6 +31,7 @@ namespace eiffel
 		bool function_level_linking = false;
 		bool intrinsic_functions = false;
 		bool sdl_check = true;
+		std::string additional_include_directories = "";
 	};
 
 	struct LinkInfo 
