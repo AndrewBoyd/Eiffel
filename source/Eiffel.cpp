@@ -1,7 +1,6 @@
 #include "ConsoleArguments.h"
 #include "VisualStudioProjectFile.h"
 #include "SolutionManager.h"
-#include <tinyxml.h>
 #include <iostream>
 #include <set>
 

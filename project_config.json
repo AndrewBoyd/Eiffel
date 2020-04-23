@@ -1,0 +1,8 @@
+{
+	"dependencies": [
+	],
+	"nuget": [
+		"fmt|6.1.2",
+		"nlohmann.json|3.7.3"
+	]
+}
