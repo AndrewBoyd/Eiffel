@@ -1,6 +1,6 @@
 #include "VisualStudioProjectFile.h"
-#include "xylo_xml.h"
-#include "string_utils.h"
+#include <utility/xylo_xml.h>
+#include <utility/string_utils.h>
 #include <fmt/format.h>
 #include <fstream>
 #include <sstream>

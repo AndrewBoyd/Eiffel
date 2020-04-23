@@ -1,5 +1,6 @@
 {
 	"dependencies": [
+		"Utility"
 	],
 	"nuget": [
 		"fmt|6.1.2",

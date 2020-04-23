@@ -1,7 +1,7 @@
 #pragma once
 #include "ProjectInfo.h"
 #include "NugetPackage.h"
-#include "guid.h"
+#include <utility/guid.h>
 #include <set>
 
 namespace eiffel 

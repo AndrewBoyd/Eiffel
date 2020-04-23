@@ -1,8 +1,8 @@
 #pragma once
 #include "ProjectInfo.h"
 #include "NugetPackage.h"
-#include "cpp20.h"
-#include "guid.h"
+#include <utility/cpp20.h>
+#include <utility/guid.h>
 #include "SolutionManager.h"
 #include <filesystem>
 #include <compare>
