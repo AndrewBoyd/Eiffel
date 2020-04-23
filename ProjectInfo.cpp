@@ -4,6 +4,7 @@
 auto const kProjectConfigFilename = "project_config.json";
 auto const kVisualStudioProjectDirectory = "temp/vs";
 auto const kCppFilesDirectory = "source";
+auto const kNugetDirectory = "temp/vs/packages";
 
 namespace eiffel 
 {
@@ -23,8 +24,11 @@ namespace eiffel
 	{
 		auto result = ProjectPaths{};
 		result.root_directory = project_directory;
-		result.vs_directory = main_project_directory / kVisualStudioProjectDirectory;
 		result.source_directory = project_directory / kCppFilesDirectory;
+
+		result.nuget_directory = main_project_directory / kNugetDirectory;
+		result.vs_directory = main_project_directory / kVisualStudioProjectDirectory;
+		
 		result.config_file = project_directory / kProjectConfigFilename;
 		return result;
 	}

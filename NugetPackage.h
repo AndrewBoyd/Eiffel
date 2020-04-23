@@ -16,6 +16,7 @@ namespace eiffel
 
 	std::vector<NugetPackage> findNugetPackages(ProjectInfo const& project_info);
 
-	std::string getNugetTargetsFile(NugetPackage const& nuget_package);
+	std::string getNugetTargetsFile(NugetPackage const& nuget_package, std::filesystem::path const& nugets_directory);
 
+	bool installNugetPackage(NugetPackage package, std::filesystem::path location);
 }

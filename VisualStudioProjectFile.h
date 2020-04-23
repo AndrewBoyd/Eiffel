@@ -76,7 +76,7 @@ namespace eiffel
 
 		std::vector< NugetPackage > nuget_packages;
 		bool is_main_project = true;
-
+		std::filesystem::path nuget_package_directory;
 	};
 
 	VisualStudioProjectFile createProjectFile(ProjectInfo const & project_info);

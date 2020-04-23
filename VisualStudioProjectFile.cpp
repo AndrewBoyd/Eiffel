@@ -114,6 +114,7 @@ namespace eiffel
 		auto result = VisualStudioProjectFile{};
 		initProjectFile(result);
 		result.project_guid = project_info.guid;
+		result.nuget_package_directory = project_info.paths.nuget_directory;
 		findCppAndHFiles(project_info, result);
 		findNugetPackages(project_info, result);
 		setStaticLib(project_info, result);
@@ -306,7 +307,7 @@ namespace eiffel
 			node.setAttribute("Label", "ExtensionTargets");
 			for (auto nuget : vs.nuget_packages)
 			{
-				auto targets_file = getNugetTargetsFile(nuget);
+				auto targets_file = getNugetTargetsFile(nuget, vs.nuget_package_directory);
 				auto import_node = node.addNode("Import");
 				import_node.setAttribute("Project", targets_file);
 				import_node.setAttribute("Condition", fmt::format("Exists('{}')", targets_file));
@@ -327,7 +328,7 @@ namespace eiffel
 			addNugetErrorMessage(node);
 			for (auto& nuget_package : vs.nuget_packages)
 			{
-				auto targets_file = getNugetTargetsFile(nuget_package);
+				auto targets_file = getNugetTargetsFile(nuget_package, vs.nuget_package_directory);
 				auto condition = fmt::format("!Exists('{}')", targets_file);
 				auto text = fmt::format("$([System.String]::Format('$(ErrorText)', '{}'))", targets_file);
 				auto error_node = node.addNode("Error");
@@ -558,6 +559,17 @@ namespace eiffel
 		sln::exportFile(filename, solution);
 	}
 
+	void installNugets(Solution const & solution) 
+	{
+		auto & project_info = solution.all_projects.at(solution.main_project);
+		auto nuget_directory = project_info.paths.nuget_directory;
+		std::filesystem::create_directories(nuget_directory);
+		for (auto& nuget : solution.nuget_packages) 
+		{
+			installNugetPackage(nuget, nuget_directory);
+		}
+	}
+
 	void exportPackagesFile(Solution const & solution)
 	{
 		auto& project_info = solution.all_projects.at(solution.main_project);
@@ -568,6 +580,8 @@ namespace eiffel
 
 	void exportSolution(Solution const& solution)
 	{
+		installNugets(solution);
+
 		for (auto& [project, project_info] : solution.all_projects)
 		{
 			auto project_file = createProjectFile(project_info);

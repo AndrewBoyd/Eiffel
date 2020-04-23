@@ -13,6 +13,7 @@ namespace eiffel {
 		Path source_directory = {};
 		Path vs_directory = {};
 		Path config_file = {};
+		Path nuget_directory = {};
 	};
 
 	struct ProjectInfo
