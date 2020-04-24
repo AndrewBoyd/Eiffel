@@ -68,8 +68,12 @@ namespace eiffel
 		for (auto file : std::filesystem::recursive_directory_iterator(search_location)) 
 		{
 			if (!file.is_regular_file()) continue;
+			auto filename = file.path().filename().string();
 			auto extension = file.path().extension().string();
 			auto relative_path = std::filesystem::relative(file.path(), project_info.paths.vs_directory);
+
+			if (project_info.project_type == ProjectType::SourceCode_StaticLib
+				&& filename == "main.cpp") continue;
 			
 			if (extension == ".cpp") project_file.cpp_filenames.push_back(relative_path.string());
 			if (extension == ".h") project_file.h_filenames.push_back(relative_path.string());
@@ -83,7 +87,7 @@ namespace eiffel
 
 	void setStaticLib(ProjectInfo const& project_info, VisualStudioProjectFile& project_file)
 	{
-		if (!project_info.is_static_lib) return;
+		if (project_info.project_type != ProjectType::SourceCode_StaticLib) return;
 		project_file.is_main_project = false;
 		for (auto& [conf, info] : project_file.configuration_infos)
 		{
@@ -336,20 +340,55 @@ namespace eiffel
 				error_node.setAttribute("Text", text);
 			}
 		}
+		
+		void writeVcxprojectDependency(Node & parent, ProjectInfo const & dep_info)
+		{
+			auto node = parent.addNode("ProjectReference");
+			node.setAttribute("Include", fmt::format("{}.vcxproj", dep_info.name));
+			node.addNode("Project").setText(dep_info.guid);
+		}
+
+		void writeTargetProjectDependency(Node& parent, ProjectInfo const& dep_info)
+		{
+			parent.addNode("Import").setAttribute("Project", dep_info.paths.targets_path.string());
+		}
+		
+		void writeVcxprojDependencies(Node& parent,
+			Solution const& solution,
+			ProjectId const& project_id)
+		{
+			auto node = parent.addNode("ItemGroup");
+			for (auto& dep_id : solution.dependency_tree.at(project_id))
+			{
+				auto& dep_info = solution.all_projects.at(dep_id);
+				if (requiresVcxproj(dep_info.project_type))
+				{
+					writeVcxprojectDependency(node, dep_info);
+				}
+			}
+		}
+
+		void writeTargetDependencies(Node& parent,
+			Solution const& solution,
+			ProjectId const& project_id)
+		{
+			for (auto& dep_id : solution.dependency_tree.at(project_id))
+			{
+				auto& dep_info = solution.all_projects.at(dep_id);
+				if (dep_info.project_type == ProjectType::Targets)
+				{
+					writeTargetProjectDependency(parent, dep_info);
+				}
+			}
+		}
 
 		void writeProjectDependencies(Node& parent,
 			Solution const& solution,
 			ProjectId const& project_id)
 		{
 			if (solution.dependency_tree.find(project_id) == solution.dependency_tree.end()) return;
-			auto node = parent.addNode("ItemGroup");
-			for (auto& dep_id : solution.dependency_tree.at(project_id))
-			{
-				auto & dep_info = solution.all_projects.at(dep_id);
-				auto dep_node = node.addNode("ProjectReference");
-				dep_node.setAttribute("Include", fmt::format("{}.vcxproj", dep_info.name));
-				dep_node.addNode("Project").setText(dep_info.guid);
-			}
+			writeVcxprojDependencies(parent, solution, project_id);
+			writeTargetDependencies(parent, solution, project_id);
 		}
 
 		void writeProjectNode(std::stringstream & stream, 
@@ -451,7 +490,10 @@ namespace eiffel
 				for (auto & dependency_id : found_it->second)
 				{
 					auto& dependency_info = solution.all_projects.at(dependency_id);
-					stream << fmt::format("\t\t{0} = {0}\n", dependency_info.guid);
+					if (dependencyRequiresReference(dependency_info.project_type))
+					{
+						stream << fmt::format("\t\t{0} = {0}\n", dependency_info.guid);
+					}
 				}
 				stream << "\tEndProjectSection\n";
 			}
@@ -463,6 +505,8 @@ namespace eiffel
 			guid::Guid const & projects_guid)
 		{
 			auto& project_info = solution.all_projects.at(project_id);
+			if (!requiresVcxproj(project_info.project_type)) return;
+
 			auto to_format = "Project(\"{}\") = \"{}\", \"{}\", \"{}\"\n";
 			auto vcxproj_filename = project_info.name + ".vcxproj";
 			auto formatted = fmt::format(to_format, projects_guid, project_info.name, vcxproj_filename, project_info.guid);
@@ -578,12 +622,12 @@ namespace eiffel
 		packages_config::exportFile(filename, solution.nuget_packages);
 	}
 
-	void exportSolution(Solution const& solution)
+	void createProjectFiles(Solution const& solution)
 	{
-		installNugets(solution);
-
 		for (auto& [project, project_info] : solution.all_projects)
 		{
+			if (!requiresVcxproj(project_info.project_type)) continue;
+
 			auto project_file = createProjectFile(project_info);
 
 			if (auto found_it = solution.dependency_tree.find(project);
@@ -595,7 +639,12 @@ namespace eiffel
 			std::filesystem::create_directories(project_info.paths.vs_directory);
 			exportProjectFile(project_info, project, solution, project_file);
 		}
+	}
 
+	void exportSolution(Solution const& solution)
+	{
+		installNugets(solution);
+		createProjectFiles(solution);
 		exportPackagesFile(solution);
 		exportSolutionFile(solution);
 	}

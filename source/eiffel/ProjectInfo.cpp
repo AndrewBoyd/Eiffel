@@ -16,7 +16,7 @@ namespace eiffel
 
 	bool isEiffelProject(ProjectInfo const& project)
 	{
-		return project.is_eiffel;
+		return project.project_type != ProjectType::NotEiffel;
 	}
 
 	ProjectPaths getProjectPaths_Eiffel(std::filesystem::path project_directory,
@@ -44,15 +44,27 @@ namespace eiffel
 		return result;
 	}
 
+	void determineIfTargetsProject(ProjectInfo& info)
+	{
+		if (auto found_it = info.config.find("targets"); 
+			found_it != info.config.end())
+		{
+			auto file = found_it->get<std::string>();
+			info.paths.targets_path = info.paths.root_directory / file;
+			info.project_type = ProjectType::Targets;
+		}
+	}
+
 	ProjectInfo getProjectInfo_Eiffel(std::filesystem::path project_directory,
 		std::filesystem::path main_project_directory)
 	{
 		auto result = ProjectInfo{};
+		result.project_type = ProjectType::SourceCode_Application;
 		result.paths = getProjectPaths_Eiffel(project_directory, main_project_directory);
 		result.name = project_directory.filename().string();
 		result.config = nlohmann::json::parse(std::ifstream(result.paths.config_file));
 		result.guid = guid::generateGuid();
-		result.is_eiffel = true;
+		determineIfTargetsProject( result );
 		return result;
 	}
 
@@ -85,8 +97,22 @@ namespace eiffel
 	ProjectInfo getLibProjectInfo(std::filesystem::path project_directory, std::filesystem::path main_project_directory)
 	{
 		auto result = getProjectInfo(project_directory, main_project_directory);
-		result.is_static_lib = true;
+		if (result.project_type == ProjectType::SourceCode_Application)
+		{
+			result.project_type = ProjectType::SourceCode_StaticLib;
+		}
 		return result;
+	}
+
+	bool requiresVcxproj(ProjectType project_type)
+	{
+		return (project_type == ProjectType::SourceCode_Application)
+			|| (project_type == ProjectType::SourceCode_StaticLib);
+	}
+
+	bool dependencyRequiresReference(ProjectType project_type)
+	{
+		return (project_type == ProjectType::SourceCode_StaticLib);
 	}
 }
 
