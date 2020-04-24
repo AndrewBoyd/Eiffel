@@ -1,6 +1,6 @@
-#include "ConsoleArguments.h"
-#include "VisualStudioProjectFile.h"
-#include "SolutionManager.h"
+#include "eiffel/ConsoleArguments.h"
+#include "eiffel/VisualStudioProjectFile.h"
+#include "eiffel/SolutionManager.h"
 #include <iostream>
 #include <set>
 
