@@ -29,8 +29,10 @@ namespace eiffel
         std::vector< std::filesystem::path > const& search_paths,
         std::set< std::filesystem::path >& result)
     {
-        auto dependencies_json = project_info.config["dependencies"];
-        for (auto dependency_json : dependencies_json)
+        auto dependencies_it = project_info.config.find("dependencies");
+        if (dependencies_it == project_info.config.end()) return;
+
+        for (auto dependency_json : *dependencies_it)
         {
             auto dependency = dependency_json.get<std::string>();
             auto found_dependency = false;
