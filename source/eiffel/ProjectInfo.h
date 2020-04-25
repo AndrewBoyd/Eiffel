@@ -15,6 +15,7 @@ namespace eiffel {
 		Path config_file = {};
 		Path nuget_directory = {};
 		Path targets_path = {};
+		Path assets_directory = {};
 	};
 
 	enum class ProjectType
@@ -41,6 +42,7 @@ namespace eiffel {
 	ProjectInfo getLibProjectInfo(std::filesystem::path project_directory, std::filesystem::path main_project_directory);
 	bool requiresVcxproj(ProjectType project_type);
 	bool dependencyRequiresReference(ProjectType project_type);
+	std::filesystem::path getBinDirectory();
 }
 
 

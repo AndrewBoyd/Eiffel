@@ -1,4 +1,5 @@
 #include "SolutionManager.h"
+#include <utility/global_config.h>
 #include <fmt/format.h>
 #include <set>
 #include <fstream>
@@ -9,12 +10,10 @@ namespace eiffel
 
     std::vector< std::filesystem::path > findDependencySearchPaths(eiffel::ProjectInfo const& project_info)
     {
-        auto global_config_path = "C:/Users/aboyd/AppData/Roaming/Eiffel/global_config.json";
-        //auto global_config_path = "%APPDATA%/Eiffel/global_config.json"
-        auto global_config = nlohmann::json::parse(std::ifstream(global_config_path));
+        auto& conf = global_config::get();
         auto result = std::vector< std::filesystem::path >{ project_info.paths.root_directory / ".." };
 
-        for (auto path_json : global_config["search_paths"])
+        for (auto path_json : conf["search_paths"])
         {
             result.push_back(path_json.get<std::string>());
         }
@@ -23,14 +22,12 @@ namespace eiffel
         return result;
     }
 
-    void findDependencies_impl(ProjectId const & project_id, 
-        ProjectInfo const& project_info,
-        Solution& solution,
-        std::vector< std::filesystem::path > const& search_paths,
-        std::set< std::filesystem::path >& result)
+    ProjectIds findTopLevelDependencies(ProjectInfo const& project_info)
     {
         auto dependencies_it = project_info.config.find("dependencies");
-        if (dependencies_it == project_info.config.end()) return;
+        if (dependencies_it == project_info.config.end()) return {};
+        auto search_paths = findDependencySearchPaths(project_info);
+        auto result = ProjectIds{};
 
         for (auto dependency_json : *dependencies_it)
         {
@@ -42,17 +39,8 @@ namespace eiffel
                 if (std::filesystem::is_directory(test_path))
                 {
                     auto canon = std::filesystem::canonical(test_path);
-                    solution.dependency_tree[project_id].push_back(canon);
+                    result.push_back(canon);
                     found_dependency = true;
-                    if (result.find(canon) == result.end())
-                    {
-                        result.insert(canon);
-                        if (eiffel::isEiffelProject(canon))
-                        {
-                            auto dependency_info = eiffel::getProjectInfo(canon);
-                            findDependencies_impl(canon, dependency_info, solution, search_paths, result);
-                        }
-                    }
                     break;
                 }
             }
@@ -60,6 +48,31 @@ namespace eiffel
             if (!found_dependency)
             {
                 std::cout << "WARNING: Could not find dependency: " << dependency;
+            }
+        }
+
+        return result;
+    }
+
+    void findDependencies_impl(ProjectId const & project_id, 
+        ProjectInfo const& project_info,
+        Solution& solution,
+        std::vector< std::filesystem::path > const& search_paths,
+        std::set< std::filesystem::path >& result)
+    {
+        // TODO: Pass in search paths
+        auto dependencies = findTopLevelDependencies(project_info);
+        solution.dependency_tree[project_id] = dependencies;
+        for (auto& dep : dependencies)
+        {
+            if (result.find(dep) == result.end())
+            {
+                result.insert(dep);
+                if (eiffel::isEiffelProject(dep))
+                {
+                    auto dependency_info = eiffel::getProjectInfo(dep);
+                    findDependencies_impl(dep, dependency_info, solution, search_paths, result);
+                }
             }
         }
     }

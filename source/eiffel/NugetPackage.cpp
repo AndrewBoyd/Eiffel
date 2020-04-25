@@ -3,18 +3,6 @@
 #include <fmt/format.h>
 #include <fstream>
 
-namespace 
-{
-	// TODO: Move & make better
-	std::filesystem::path getBinDirectory()
-	{
-		auto global_config_path = "C:/Users/aboyd/AppData/Roaming/Eiffel/global_config.json";
-		//auto global_config_path = "%APPDATA%/Eiffel/global_config.json"
-		auto global_config = nlohmann::json::parse(std::ifstream(global_config_path));
-		return global_config["bin_directory"].get<std::string>();
-	}
-}
-
 namespace eiffel {
 	std::vector<NugetPackage> findNugetPackages(ProjectInfo const& project_info)
 	{

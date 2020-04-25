@@ -19,12 +19,7 @@ namespace eiffel
 
 	std::vector< std::filesystem::path > findDependencySearchPaths(eiffel::ProjectInfo const& project_info);
 
-	ProjectIds findDependencies(eiffel::ProjectInfo const& project_info,
-		Solution& solution,
-		std::vector< std::filesystem::path > search_paths);
-
-	ProjectIds findDependencies(eiffel::ProjectInfo const& project_info,
-		Solution & solution);
+	ProjectIds findTopLevelDependencies(ProjectInfo const& project_info);
 
 	Solution createSolution(ProjectId project_id);
 }

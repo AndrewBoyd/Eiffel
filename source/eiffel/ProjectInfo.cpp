@@ -1,13 +1,21 @@
 #include "ProjectInfo.h"
 #include <fstream>
+#include <utility/global_config.h>
 
 auto const kProjectConfigFilename = "project_config.json";
 auto const kVisualStudioProjectDirectory = "temp/vs";
 auto const kCppFilesDirectory = "source";
 auto const kNugetDirectory = "temp/vs/packages";
+auto const kAssetsDirectory = "assets";
 
 namespace eiffel 
 {
+	std::filesystem::path getBinDirectory()
+	{
+		auto& conf = global_config::get();
+		return conf["bin_directory"].get<std::string>();
+	}
+
 	bool isEiffelProject(std::filesystem::path directory)
 	{
 		auto config_file = directory / kProjectConfigFilename;
@@ -25,11 +33,13 @@ namespace eiffel
 		auto result = ProjectPaths{};
 		result.root_directory = project_directory;
 		result.source_directory = project_directory / kCppFilesDirectory;
+		result.assets_directory = project_directory / kAssetsDirectory;
 
 		result.nuget_directory = main_project_directory / kNugetDirectory;
 		result.vs_directory = main_project_directory / kVisualStudioProjectDirectory;
 		
 		result.config_file = project_directory / kProjectConfigFilename;
+
 		return result;
 	}
 
@@ -59,8 +69,13 @@ namespace eiffel
 		std::filesystem::path main_project_directory)
 	{
 		auto result = ProjectInfo{};
-		result.project_type = ProjectType::SourceCode_Application;
 		result.paths = getProjectPaths_Eiffel(project_directory, main_project_directory);
+
+		if (std::filesystem::exists(result.paths.source_directory / "main.cpp"))
+			result.project_type = ProjectType::SourceCode_Application;
+		else
+			result.project_type = ProjectType::SourceCode_StaticLib;
+		
 		result.name = project_directory.filename().string();
 		result.config = nlohmann::json::parse(std::ifstream(result.paths.config_file));
 		result.guid = guid::generateGuid();
