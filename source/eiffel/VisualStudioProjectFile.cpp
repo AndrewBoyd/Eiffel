@@ -41,6 +41,22 @@ namespace eiffel
 		info.link_info.optimize_references = true;
 	}
 	
+	void setPostBuildEvent(ProjectInfo const& project_info, VisualStudioProjectFile& project_file)
+	{
+		auto command = getBinDirectory() / "EiffelPostBuild.exe";
+		auto project = project_info.paths.root_directory;
+		auto exe_dir = "$(OutDir)";
+		auto runtime_dir = "$(OutDir)\\..\\runtime";
+
+		auto full_command = fmt::format(R"({} --project={} --exe_dir={} --runtime={})", 
+			command.string(), project.string(), exe_dir, runtime_dir);
+
+		for (auto& [config, config_info] : project_file.configuration_infos)
+		{
+			config_info.post_build_info.event_command = full_command;
+		}
+	}
+
 	void initProjectFile(VisualStudioProjectFile& project_file)
 	{
 		for (auto configuration : project_file.configurations)
@@ -122,6 +138,9 @@ namespace eiffel
 		findCppAndHFiles(project_info, result);
 		findNugetPackages(project_info, result);
 		setStaticLib(project_info, result);
+		if (result.is_main_project) 
+			setPostBuildEvent(project_info, result);
+		
 		return result;
 	}
 	
@@ -246,7 +265,7 @@ namespace eiffel
 			}
 		}
 
-		void setItemDefCompile(Node& parent, ConfigurationInfo info)
+		void setItemDefCompile(Node& parent, ConfigurationInfo const & info)
 		{
 			using namespace string_utils;
 			auto& ci = info.compile_info;
@@ -260,7 +279,7 @@ namespace eiffel
 			node.addNode("AdditionalIncludeDirectories").setText(ci.additional_include_directories);
 		}
 
-		void setItemDefLink(Node& parent, ConfigurationInfo info)
+		void setItemDefLink(Node& parent, ConfigurationInfo const& info)
 		{
 			using namespace string_utils;
 			auto& li = info.link_info;
@@ -271,6 +290,13 @@ namespace eiffel
 			node.addNode("GenerateDebugInformation").setText(b_to_s(li.generate_debug_information));
 		}
 
+		void setItemDefPostBuild(Node& parent, ConfigurationInfo const& info)
+		{
+			auto& pbi = info.post_build_info;
+			auto node = parent.addNode("PostBuildEvent");
+			node.addNode("Command").setText(pbi.event_command);
+		}
+
 		void addItemDefinitionGroups(Node& parent, Vs const& vs)
 		{
 			for (auto& [config, info] : vs.configuration_infos)
@@ -279,6 +305,7 @@ namespace eiffel
 				setConfigCondition(node, config);
 				setItemDefCompile(node, info);
 				setItemDefLink(node, info);
+				setItemDefPostBuild(node, info);
 			}
 		}
 

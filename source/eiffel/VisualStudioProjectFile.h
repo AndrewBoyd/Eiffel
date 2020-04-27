@@ -42,10 +42,16 @@ namespace eiffel
 		bool optimize_references = false;
 	};
 
+	struct PostBuildInfo
+	{
+		std::string event_command = {};
+	};
+
 	struct ConfigurationInfo
 	{
 		CompileInfo compile_info;
 		LinkInfo link_info;
+		PostBuildInfo post_build_info;
 		bool link_incrmental = false;
 		std::string platform_toolset = "v142";
 		std::string character_set = "Unicode";
