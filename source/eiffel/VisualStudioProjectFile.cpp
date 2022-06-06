@@ -277,6 +277,7 @@ namespace eiffel
 			node.addNode("ConformanceMode").setText(b_to_s(ci.conformance_mode));
 			node.addNode("LanguageStandard").setText(ci.language_standard);
 			node.addNode("AdditionalIncludeDirectories").setText(ci.additional_include_directories);
+			node.addNode("AdditionalOptions").setText(ci.additional_options);
 		}
 
 		void setItemDefLink(Node& parent, ConfigurationInfo const& info)

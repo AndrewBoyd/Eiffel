@@ -32,6 +32,7 @@ namespace eiffel
 		bool intrinsic_functions = false;
 		bool sdl_check = true;
 		std::string additional_include_directories = "";
+		std::string additional_options = "/experimental:preprocessor";
 	};
 
 	struct LinkInfo 
